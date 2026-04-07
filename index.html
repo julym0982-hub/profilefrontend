@@ -266,6 +266,9 @@ nav,section,footer{position:relative;z-index:1;}
 
 /* Section reveal initial state — GSAP sets opacity/transform */
 .gsap-hidden{opacity:0;}
+/* Safety fallback: show content if GSAP never loads */
+body:not(.gsap-ready) .gsap-hidden{animation:gsapFallback 0.5s 4s ease forwards;}
+@keyframes gsapFallback{to{opacity:1;}}
 </style>
 </head>
 <body>
@@ -1012,4 +1015,28 @@ function boot() {
 let bootAttempts = 0;
 function tryBoot() {
   bootAttempts++;
-  if (typeof gsap !== 'undefined' || 
+  if (typeof gsap !== 'undefined' || bootAttempts > 20) {
+    boot();
+  } else {
+    setTimeout(tryBoot, 150);
+  }
+}
+
+// Fallback: if GSAP never loads, show all hidden elements after 4s
+setTimeout(function() {
+  if (typeof gsap === 'undefined') {
+    document.querySelectorAll('.gsap-hidden').forEach(function(el) {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      el.style.transition = 'opacity 0.5s ease';
+    });
+  }
+  document.body.classList.add('gsap-ready');
+}, 4000);
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(tryBoot, 300);
+});
+</script>
+</body>
+</html>
